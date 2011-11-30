@@ -52,6 +52,8 @@ void NetlinkHandler::onEvent(NetlinkEvent *evt) {
     }
 
     if (!strcmp(subsys, "block")) {
+		//SLOGW("NetlinkHandler::onEvent: subsys=%s, mPath=%s, action = %d", subsys, evt->findParam("DEVPATH"), evt->getAction());
+		//evt->dump();
         vm->handleBlockEvent(evt);
     }
 }
