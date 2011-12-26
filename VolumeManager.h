@@ -66,6 +66,7 @@ private:
     int                    mSavedDirtyRatio;
     int                    mUmsDirtyRatio;
     int                    mVolManagerDisabled;
+    int					   mlun;
 
 public:
     virtual ~VolumeManager();

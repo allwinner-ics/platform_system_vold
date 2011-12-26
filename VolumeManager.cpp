@@ -63,6 +63,7 @@ VolumeManager::VolumeManager() {
     // set dirty ratio to 0 when UMS is active
     mUmsDirtyRatio = 0;
     mVolManagerDisabled = 0;
+    mlun =0;
 }
 
 VolumeManager::~VolumeManager() {
@@ -960,11 +961,19 @@ int VolumeManager::shareVolume(const char *label, const char *method) {
 
     int fd;
     char nodepath[255];
+    char umslun[255];
     snprintf(nodepath,
              sizeof(nodepath), "/dev/block/vold/%d:%d",
              MAJOR(d), MINOR(d));
-
-    if ((fd = open(MASS_STORAGE_FILE_PATH, O_WRONLY)) < 0) {
+    
+    if( mlun == 0)
+    	snprintf(umslun, sizeof(umslun), "/sys/class/android_usb/android0/f_mass_storage/lun/file");
+    else
+    	snprintf(umslun, sizeof(umslun), "/sys/class/android_usb/android0/f_mass_storage/lun%d/file", mlun);
+    
+    mlun++;
+    	         	
+    if ((fd = open(umslun, O_WRONLY)) < 0) {
         SLOGE("Unable to open ums lunfile (%s)", strerror(errno));
         return -1;
     }
@@ -1014,7 +1023,15 @@ int VolumeManager::unshareVolume(const char *label, const char *method) {
     }
 
     int fd;
-    if ((fd = open(MASS_STORAGE_FILE_PATH, O_WRONLY)) < 0) {
+    char umslun[255];
+    mlun--;    
+    if( mlun == 0)
+    	snprintf(umslun, sizeof(umslun), "/sys/class/android_usb/android0/f_mass_storage/lun/file");
+    else
+    	snprintf(umslun, sizeof(umslun), "/sys/class/android_usb/android0/f_mass_storage/lun%d/file", mlun);
+    
+    
+    if ((fd = open(umslun, O_WRONLY)) < 0) {
         SLOGE("Unable to open ums lunfile (%s)", strerror(errno));
         return -1;
     }
@@ -1157,6 +1174,10 @@ bool VolumeManager::isMountpointMounted(const char *mp)
 }
 
 int VolumeManager::cleanupAsec(Volume *v, bool force) {
+    /* Only EXTERNAL_STORAGE needs ASEC cleanup. */
+    const char *externalPath = getenv("EXTERNAL_STORAGE") ?: "/mnt/sdcard";
+    if (0 != strcmp(v->getMountpoint(), externalPath))
+        return 0;
     while(mActiveContainers->size()) {
         AsecIdCollection::iterator it = mActiveContainers->begin();
         ContainerData* cd = *it;

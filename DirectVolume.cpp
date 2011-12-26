@@ -281,6 +281,9 @@ void DirectVolume::handleDiskRemoved(const char *devpath, NetlinkEvent *evt) {
              getLabel(), getMountpoint(), major, minor);
     mVm->getBroadcaster()->sendBroadcast(ResponseCode::VolumeDiskRemoved,
                                              msg, false);
+	/* 2011-4-30 force unmount fs */
+	SLOGD("DirectVolume : handleDiskRemoved : unmountVol");
+	Volume::unmountVol(true,true);
     setState(Volume::State_NoMedia);
 }
 
