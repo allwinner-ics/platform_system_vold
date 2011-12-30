@@ -240,6 +240,12 @@ int Volume::formatVol() {
             SLOGE("Failed to initialize MBR (%s)", strerror(errno));
             goto err;
         }
+        if (Fat::format(devicePath, 0)) {
+        	SLOGE("Failed to format (%s)", strerror(errno));
+        	goto err;
+        }
+        ret = 0;
+        goto err;
     }
 
     sprintf(devicePath, "/dev/block/vold/%d:%d",
@@ -304,6 +310,7 @@ int Volume::mountVol() {
     /* Don't try to mount the volumes if we have not yet entered the disk password
      * or are in the process of encrypting.
      */
+    SLOGW("Volume::mountVol state : %d", getState());
     if ((getState() == Volume::State_NoMedia) ||
         ((!strcmp(decrypt_state, "1") || encrypt_progress[0]) && primaryStorage)) {
         snprintf(errmsg, sizeof(errmsg),
