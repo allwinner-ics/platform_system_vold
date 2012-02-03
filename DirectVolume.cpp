@@ -148,6 +148,9 @@ void DirectVolume::handleDiskAdded(const char *devpath, NetlinkEvent *evt) {
         mDiskNumParts = 1;
     }
 
+	/* modified by javen */
+	mPartsEventCnt = 0;
+
     char msg[255];
 
     int partmask = 0;
@@ -184,6 +187,14 @@ void DirectVolume::handlePartitionAdded(const char *devpath, NetlinkEvent *evt) 
 
     const char *tmp = evt->findParam("PARTN");
 
+	/* modified by javen */
+	if(mPartsEventCnt > mDiskNumParts){
+		SLOGW("Partition event is to much, mPartsEventCnt=%d, mDiskNumParts=%d\n", mPartsEventCnt, mDiskNumParts);
+		mPartsEventCnt = mDiskNumParts;
+	}else{
+		mPartsEventCnt++;
+	}
+
     if (tmp) {
         part_num = atoi(tmp);
     } else {
@@ -212,7 +223,10 @@ void DirectVolume::handlePartitionAdded(const char *devpath, NetlinkEvent *evt) 
     } else {
         mPartMinors[part_num -1] = minor;
     }
-    mPendingPartMap &= ~(1 << part_num);
+
+	/* modified by javen */
+    //mPendingPartMap &= ~(1 << part_num);
+    mPendingPartMap &= ~(1 << mPartsEventCnt);
 
     if (!mPendingPartMap) {
 #ifdef PARTITION_DEBUG
@@ -248,6 +262,9 @@ void DirectVolume::handleDiskChanged(const char *devpath, NetlinkEvent *evt) {
         SLOGW("Kernel block uevent missing 'NPARTS'");
         mDiskNumParts = 1;
     }
+
+	/* modified by javen */
+	mPartsEventCnt = 0;
 
     int partmask = 0;
     int i;
@@ -305,7 +322,7 @@ void DirectVolume::handlePartitionRemoved(const char *devpath, NetlinkEvent *evt
     if (state != Volume::State_Mounted && state != Volume::State_Shared) {
         return;
     }
-        
+
     if ((dev_t) MKDEV(major, minor) == mCurrentlyMountedKdev) {
         /*
          * Yikes, our mounted partition is going away!
@@ -321,7 +338,7 @@ void DirectVolume::handlePartitionRemoved(const char *devpath, NetlinkEvent *evt
         }
 
         if (Volume::unmountVol(true, false)) {
-            SLOGE("Failed to unmount volume on bad removal (%s)", 
+            SLOGE("Failed to unmount volume on bad removal (%s)",
                  strerror(errno));
             // XXX: At this point we're screwed for now
         } else {

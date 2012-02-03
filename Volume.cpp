@@ -112,7 +112,7 @@ static const char *stateToStr(int state) {
 
 Volume::Volume(VolumeManager *vm, const char *label, const char *mount_point) {
     mVm = vm;
-    mDebug = false;
+    mDebug = true;
     mLabel = strdup(label);
     mMountpoint = strdup(mount_point);
     mState = Volume::State_Init;
@@ -235,21 +235,17 @@ int Volume::formatVol() {
     if (formatEntireDevice) {
         sprintf(devicePath, "/dev/block/vold/%d:%d",
                 MAJOR(diskNode), MINOR(diskNode));
-
+		
+		SLOGI("init mbr %s (%s)", getLabel(), devicePath);
+		
         if (initializeMbr(devicePath)) {
             SLOGE("Failed to initialize MBR (%s)", strerror(errno));
             goto err;
-        }
-        if (Fat::format(devicePath, 0)) {
-        	SLOGE("Failed to format (%s)", strerror(errno));
-        	goto err;
-        }
-        ret = 0;
-        goto err;
+        }        
     }
-
-    sprintf(devicePath, "/dev/block/vold/%d:%d",
-            MAJOR(partNode), MINOR(partNode));
+	
+	getDeviceNodes(&partNode, 1);
+    sprintf(devicePath, "/dev/block/vold/%d:%d",MAJOR(partNode), MINOR(partNode));       
 
     if (mDebug) {
         SLOGI("Formatting volume %s (%s)", getLabel(), devicePath);
