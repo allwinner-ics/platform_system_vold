@@ -21,7 +21,7 @@
 
 #include "Volume.h"
 
-#define MAX_PARTS 4
+#define MAX_PARTS 8
 
 typedef android::List<char *> PathCollection;
 

@@ -49,6 +49,8 @@
 #include "Process.h"
 #include "cryptfs.h"
 
+#define  V_MAX_PARTITIONS		8
+
 extern "C" void dos_partition_dec(void const *pp, struct dos_partition *d);
 extern "C" void dos_partition_enc(void *pp, struct dos_partition *d);
 
@@ -290,7 +292,7 @@ bool Volume::isMountpointMounted(const char *path) {
 }
 
 int Volume::mountVol() {
-    dev_t deviceNodes[4];
+    dev_t deviceNodes[V_MAX_PARTITIONS];
     int n, i, rc = 0;
     char errmsg[255];
     const char* externalStorage = getenv("EXTERNAL_STORAGE");
@@ -332,7 +334,8 @@ int Volume::mountVol() {
         return 0;
     }
 
-    n = getDeviceNodes((dev_t *) &deviceNodes, 4);
+    //n = getDeviceNodes((dev_t *) &deviceNodes, 4);
+    n = getDeviceNodes((dev_t *) &deviceNodes, V_MAX_PARTITIONS);
     if (!n) {
         SLOGE("Failed to get device nodes (%s)\n", strerror(errno));
         return -1;
@@ -381,7 +384,8 @@ int Volume::mountVol() {
         updateDeviceInfo(nodepath, new_major, new_minor);
 
         /* Get the device nodes again, because they just changed */
-        n = getDeviceNodes((dev_t *) &deviceNodes, 4);
+        //n = getDeviceNodes((dev_t *) &deviceNodes, 4);
+        n = getDeviceNodes((dev_t *) &deviceNodes, V_MAX_PARTITIONS);
         if (!n) {
             SLOGE("Failed to get device nodes (%s)\n", strerror(errno));
             return -1;
