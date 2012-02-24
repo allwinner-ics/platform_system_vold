@@ -974,7 +974,7 @@ int VolumeManager::shareVolume(const char *label, const char *method) {
     mlun++;
     	         	
     if ((fd = open(umslun, O_WRONLY)) < 0) {
-        SLOGE("Unable to open ums lunfile (%s)", strerror(errno));
+        SLOGE("Unable to open ums lunfile : (%s), (%s)", umslun,strerror(errno));
         return -1;
     }
 
@@ -1032,7 +1032,7 @@ int VolumeManager::unshareVolume(const char *label, const char *method) {
     
     
     if ((fd = open(umslun, O_WRONLY)) < 0) {
-        SLOGE("Unable to open ums lunfile (%s)", strerror(errno));
+        SLOGE("Unable to open ums lunfile (%s), (%s)", umslun, strerror(errno));
         return -1;
     }
 

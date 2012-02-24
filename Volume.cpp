@@ -607,7 +607,7 @@ int Volume::doUnmount(const char *path, bool force) {
     }
 
     while (retries--) {
-        if (!umount(path) || errno == EINVAL || errno == ENOENT) {
+        if (!umount(path) || errno == EINVAL || errno == ENOENT || errno == ENOTCONN) {
             SLOGI("%s sucessfully unmounted", path);
             return 0;
         }
