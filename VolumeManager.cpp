@@ -1037,11 +1037,29 @@ int VolumeManager::unshareVolume(const char *label, const char *method) {
     }
 
     char ch = 0;
+#if 1
+	int wait_i = 0;
+	int ret_val = 0;
+	while(wait_i < 30){
+		if (ret_val = write(fd, &ch, 1) >= 0) {
+			break;
+		}
+		SLOGE("---wait :%d %d \n", wait_i, ret_val);
+		wait_i++;
+		usleep(100);
+	}
+	if(wait_i == 30){
+		SLOGE("Unable to write to ums lunfile (%s)", strerror(errno));
+        close(fd);
+        return -1;
+	}
+#else
     if (write(fd, &ch, 1) < 0) {
         SLOGE("Unable to write to ums lunfile (%s)", strerror(errno));
         close(fd);
         return -1;
     }
+#endif
 
     close(fd);
     v->handleVolumeUnshared();
