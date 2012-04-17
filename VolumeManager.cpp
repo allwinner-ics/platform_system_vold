@@ -920,6 +920,7 @@ int VolumeManager::shareEnabled(const char *label, const char *method, bool *ena
 
 int VolumeManager::shareVolume(const char *label, const char *method) {
     Volume *v = lookupVolume(label);
+	int part = 0;
 
     if (!v) {
         errno = ENOENT;
@@ -959,33 +960,11 @@ int VolumeManager::shareVolume(const char *label, const char *method) {
         return -1;
     }
 
-    int fd;
-    char nodepath[255];
-    char umslun[255];
-    snprintf(nodepath,
-             sizeof(nodepath), "/dev/block/vold/%d:%d",
-             MAJOR(d), MINOR(d));
-    
-    if( mlun == 0)
-    	snprintf(umslun, sizeof(umslun), "/sys/class/android_usb/android0/f_mass_storage/lun/file");
-    else
-    	snprintf(umslun, sizeof(umslun), "/sys/class/android_usb/android0/f_mass_storage/lun%d/file", mlun);
-    
-    mlun++;
-    	         	
-    if ((fd = open(umslun, O_WRONLY)) < 0) {
-        SLOGE("Unable to open ums lunfile : (%s), (%s)", umslun,strerror(errno));
-        return -1;
-    }
+	part=v->shareVol(mlun);
+	mlun += part;
+	SLOGI("shareVolume: mlun = %d", mlun);
 
-    if (write(fd, nodepath, strlen(nodepath)) < 0) {
-        SLOGE("Unable to write to ums lunfile (%s)", strerror(errno));
-        close(fd);
-        return -1;
-    }
 
-    close(fd);
-    v->handleVolumeShared();
     if (mUmsSharingCount++ == 0) {
         FILE* fp;
         mSavedDirtyRatio = -1; // in case we fail
@@ -1001,11 +980,13 @@ int VolumeManager::shareVolume(const char *label, const char *method) {
             SLOGE("Failed to open /proc/sys/vm/dirty_ratio (%s)", strerror(errno));
         }
     }
+
     return 0;
 }
 
 int VolumeManager::unshareVolume(const char *label, const char *method) {
     Volume *v = lookupVolume(label);
+	int part = 0;
 
     if (!v) {
         errno = ENOENT;
@@ -1022,47 +1003,11 @@ int VolumeManager::unshareVolume(const char *label, const char *method) {
         return -1;
     }
 
-    int fd;
-    char umslun[255];
-    mlun--;    
-    if( mlun == 0)
-    	snprintf(umslun, sizeof(umslun), "/sys/class/android_usb/android0/f_mass_storage/lun/file");
-    else
-    	snprintf(umslun, sizeof(umslun), "/sys/class/android_usb/android0/f_mass_storage/lun%d/file", mlun);
-    
-    
-    if ((fd = open(umslun, O_WRONLY)) < 0) {
-        SLOGE("Unable to open ums lunfile (%s), (%s)", umslun, strerror(errno));
-        return -1;
-    }
+	part=v->unshareVol();
+	mlun -= part;
 
-    char ch = 0;
-#if 1
-	int wait_i = 0;
-	int ret_val = 0;
-	while(wait_i < 30){
-		if (ret_val = write(fd, &ch, 1) >= 0) {
-			break;
-		}
-		SLOGE("---wait :%d %d \n", wait_i, ret_val);
-		wait_i++;
-		usleep(100);
-	}
-	if(wait_i == 30){
-		SLOGE("Unable to write to ums lunfile (%s)", strerror(errno));
-        close(fd);
-        return -1;
-	}
-#else
-    if (write(fd, &ch, 1) < 0) {
-        SLOGE("Unable to write to ums lunfile (%s)", strerror(errno));
-        close(fd);
-        return -1;
-    }
-#endif
+	SLOGI("unshareVolume: lun = %d", mlun);
 
-    close(fd);
-    v->handleVolumeUnshared();
     if (--mUmsSharingCount == 0 && mSavedDirtyRatio != -1) {
         FILE* fp;
         if ((fp = fopen("/proc/sys/vm/dirty_ratio", "r+"))) {
@@ -1073,6 +1018,7 @@ int VolumeManager::unshareVolume(const char *label, const char *method) {
         }
         mSavedDirtyRatio = -1;
     }
+
     return 0;
 }
 

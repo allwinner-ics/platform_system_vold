@@ -57,12 +57,11 @@ int Fat::check(const char *fsPath) {
     do {
         const char *args[5];
         args[0] = FSCK_MSDOS_PATH;
-        args[1] = "-p";
-        args[2] = "-f";
-        args[3] = fsPath;
-        args[4] = NULL;
+		args[1] = "-p";
+		args[2] = fsPath;
+		args[3] = NULL;
 
-        rc = logwrap(4, args, 1);
+        rc = logwrap(3, args, 1);
 
         switch(rc) {
         case 0:

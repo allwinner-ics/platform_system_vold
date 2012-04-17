@@ -45,6 +45,7 @@ DirectVolume::DirectVolume(VolumeManager *vm, const char *label,
     mDiskMajor = -1;
     mDiskMinor = -1;
     mDiskNumParts = 0;
+	mPartsEventCnt = 0;
 
     setState(Volume::State_NoMedia);
 }

@@ -57,3 +57,4 @@ void NetlinkHandler::onEvent(NetlinkEvent *evt) {
         vm->handleBlockEvent(evt);
     }
 }
+
